@@ -39,7 +39,7 @@ func main() {
 	}()
 
 	// setup cli option parser
-	parser := argparse.NewParser("mpdcord", "MPD RPC for Discord")
+	parser := argparse.NewParser("mpdcord", "Discord Rich Presence for MPD written in Go")
 
 	// get config path
 	configHome := os.Getenv("XDG_CONFIG_HOME")
@@ -54,11 +54,14 @@ func main() {
 	configPath := parser.String("c", "config", &argparse.Options{
 		Required: false,
 		Default:  defaultConfigPath,
+        Help: "Specify non-standard config path.",
 	})
 	verbose := parser.Flag("v", "verbose", &argparse.Options{
 		Required: false,
 		Default:  false,
+        Help: "Output additional information, useful for debugging.",
 	})
+
 	argerr := parser.Parse(os.Args)
 	if argerr != nil {
 		fmt.Print(parser.Usage(argerr))
@@ -144,7 +147,8 @@ func main() {
 			// format strings from config
 			details, err := interpol.WithMap(config.Format.Details, FormatMap(status, song, stats))
             if err != nil {
-                ui.Error("Couldn't interpolate details")
+                ui.Error("Invalid formatting:")
+                fmt.Println(config.Format.Details)
                 panic(err)
             } else if *verbose {
                 ui.Info("Details:")
@@ -153,7 +157,8 @@ func main() {
 
 			state, err := interpol.WithMap(config.Format.State, FormatMap(status, song, stats))
             if err != nil {
-                ui.Error("Couldn't interpolate state")
+                ui.Error("Invalid formatting:")
+                fmt.Println(config.Format.State)
                 panic(err)
             } else if *verbose {
                 ui.Info("State:")

@@ -24,8 +24,8 @@ var DefaultConfig = Config{
 	Network:  "tcp",
 	Password: "",
 	Format: Format{
-		State:     "{title}",
-		Details:   "{artist}",
+		Details:   "{title}",
+		State:     "{artist}",
 		Remaining: false,
 	},
 }
