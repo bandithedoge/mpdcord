@@ -2,7 +2,7 @@
 
 ## Installation
 
-Builds mpdcord locally and places the binary at `$GOPATH/bin/mpdcord` (defaults to `~/go/bin/mpdcord`). You need to [https://go.dev/doc/install](install Go) for this to work.
+Builds mpdcord locally and places the binary at `$GOPATH/bin/mpdcord` (defaults to `~/go/bin/mpdcord`). You need to [install Go](https://go.dev/doc/install) for this to work.
 
 ```bash
 # latest stable
