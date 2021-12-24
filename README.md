@@ -1,5 +1,17 @@
 # mpdcord
 
+## Installation
+
+Builds mpdcord locally and places the binary at `$GOPATH/bin/mpdcord` (defaults to `~/go/bin/mpdcord`). You need to [https://go.dev/doc/install](install Go) for this to work.
+
+```bash
+# latest stable
+go install github.com/bandithedoge/mpdcord
+
+# latest unstable
+go install github.com/bandithedoge/mpdcord@latest
+```
+
 ## Usage
 
 ```console
