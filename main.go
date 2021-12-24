@@ -54,12 +54,12 @@ func main() {
 	configPath := parser.String("c", "config", &argparse.Options{
 		Required: false,
 		Default:  defaultConfigPath,
-        Help: "Specify non-standard config path.",
+        Help: "Specify non-standard config path",
 	})
 	verbose := parser.Flag("v", "verbose", &argparse.Options{
 		Required: false,
 		Default:  false,
-        Help: "Output additional information, useful for debugging.",
+        Help: "Output additional information, useful for debugging",
 	})
 
 	argerr := parser.Parse(os.Args)

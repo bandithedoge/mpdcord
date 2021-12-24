@@ -15,15 +15,17 @@ go install github.com/bandithedoge/mpdcord@latest
 ## Usage
 
 ```console
-❯ go run main
-~ Connecting to MPD at localhost:6600 using tcp
-✓ Connected to MPD
-~ Logging in to Discord as 922175995828654100
-✓ Logged in to Discord
-^C
-interrupt
-~ Closing MPD connection
-~ Logging out
+usage: mpdcord [-h|--help] [-c|--config "<value>"] [-v|--verbose]
+
+               Discord Rich Presence for MPD written in Go
+
+Arguments:
+
+  -h  --help     Print help information
+  -c  --config   Specify non-standard config path. Default:
+                 $XDG_CONFIG_HOME/mpdcord.toml
+  -v  --verbose  Output additional information, useful for debugging. Default:
+                 false
 ```
 
 ## Configuration
