@@ -16,6 +16,7 @@ import (
 	"github.com/fhs/gompd/mpd"
 	"github.com/hugolgst/rich-go/client"
 	"github.com/imdario/mergo"
+	"github.com/imkira/go-interpol"
 )
 
 func main() {
@@ -114,18 +115,23 @@ func main() {
 
 	go func() {
 		for range watcher.Event {
-
 			// get and possibly print current status
-			song, err := conn.CurrentSong()
+            song, err := conn.CurrentSong()
 			if err != nil {
 				ui.Error("Couldn't get current song")
 				panic(err)
 			}
-			status, err := conn.Status()
+            status, err := conn.Status()
 			if err != nil {
-				ui.Error("Couldn't get current status")
+				ui.Error("Couldn't get status")
 				panic(err)
 			}
+            stats, err := conn.Stats()
+			if err != nil {
+				ui.Error("Couldn't get stats")
+				panic(err)
+			}
+
 			if *verbose {
 				outsong, _ := json.Marshal(song)
 				outstatus, _ := json.Marshal(status)
@@ -135,20 +141,41 @@ func main() {
 				fmt.Println(string(outsong))
 			}
 
-			// get unix timestamp when current song finishes
+			// format strings from config
+			details, err := interpol.WithMap(config.Format.Details, FormatMap(status, song, stats))
+            if err != nil {
+                ui.Error("Couldn't interpolate details")
+                panic(err)
+            } else if *verbose {
+                ui.Info("Details:")
+                fmt.Println(details)
+            }
+
+			state, err := interpol.WithMap(config.Format.State, FormatMap(status, song, stats))
+            if err != nil {
+                ui.Error("Couldn't interpolate state")
+                panic(err)
+            } else if *verbose {
+                ui.Info("State:")
+                fmt.Println(state)
+            }
+
+			// get time when current song finishes
 			elapsed, _ := time.ParseDuration(status["elapsed"] + "s")
 			duration, _ := time.ParseDuration(status["duration"] + "s")
 			start := time.Now()
+
 			// define activity for RPC
 			var activity = client.Activity{
-				Details: song["Artist"] + " - " + song["Title"],
-				State:   song["Album"],
+				Details: details,
+				State:   state,
 				Timestamps: &client.Timestamps{
 					Start: &start,
 				},
 			}
 
-			if config.Remaining {
+
+			if config.Format.Remaining {
 				end := start.Add(duration).Add(-elapsed)
 				activity.Timestamps.End = &end
 			}

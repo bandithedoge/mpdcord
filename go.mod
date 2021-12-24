@@ -10,4 +10,5 @@ require (
 	github.com/golangplus/testing v1.0.0 // indirect
 	github.com/hugolgst/rich-go v0.0.0-20210925091458-d59fb695d9c0
 	github.com/imdario/mergo v0.3.12
+	github.com/imkira/go-interpol v1.1.0
 )
