@@ -1,4 +1,4 @@
-module main
+module github.com/bandithedoge/mpdcord
 
 go 1.16
 

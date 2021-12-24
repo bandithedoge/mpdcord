@@ -5,12 +5,18 @@
   };
   outputs = { self, nixpkgs, flake-utils, ... }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = nixpkgs.legacyPackages.${system};
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
       in with pkgs; {
-        defaultPackage = stdenv.mkDerivation {
-          name = "mpdcord";
+        devShell = mkShell { buildinputs = [ go vgo2nix ]; };
+        defaultPackage = buildGoPackage {
+          pname = "mpdcord";
+          version = "0.1";
           src = ./.;
-          buildInputs = [ go ];
+          goDeps = ./deps.nix;
+          goPackagePath = "github.com/bandithedoge/mpdcord";
         };
       });
 }
