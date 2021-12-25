@@ -8,8 +8,8 @@ import (
 
 // define default config
 type Format struct {
-	State, Details string
-	Remaining      bool
+	Details, State, LargeText string
+	Remaining                 bool
 }
 
 type Config struct {
@@ -26,6 +26,7 @@ var DefaultConfig = Config{
 	Format: Format{
 		Details:   "{title}",
 		State:     "{artist}",
+		LargeText: "{album}",
 		Remaining: false,
 	},
 }
@@ -46,19 +47,16 @@ func FormatMap(status map[string]string) map[string]string {
 	var values = map[string]string{}
 
 	constants := []string{
-		"volume",
-		"repeat",
-		"random",
-		"single",
-		"playlistlength",
-		"consume",
+		"album",
+		"albumartist",
+		"albums",
+		"artist",
+		"artists",
 		"audio",
 		"bitrate",
-		"album",
-		"artist",
-		"albumartist",
 		"composer",
 		"conductor",
+		"consume",
 		"date",
 		"disc",
 		"ensemble",
@@ -70,12 +68,15 @@ func FormatMap(status map[string]string) map[string]string {
 		"movementnumber",
 		"originaldate",
 		"performer",
+		"playlistlength",
+		"random",
+		"repeat",
+		"single",
+		"songs",
 		"title",
 		"track",
+		"volume",
 		"work",
-		"artists",
-		"albums",
-		"songs",
 	}
 
 	for _, s := range constants {
@@ -86,10 +87,10 @@ func FormatMap(status map[string]string) map[string]string {
 }
 
 func Formatted(s string, m map[string]string) string {
-    formatted, err := interpol.WithMap(s, m)
-    if err != nil {
-        panic(err)
-    }
+	formatted, err := interpol.WithMap(s, m)
+	if err != nil {
+		panic(err)
+	}
 
-    return formatted
+	return formatted
 }

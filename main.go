@@ -147,6 +147,8 @@ func main() {
 			var activity = client.Activity{
 				Details:    Formatted(config.Format.Details, mpdmap),
 				State:      Formatted(config.Format.State, mpdmap),
+                LargeImage: "mpd",
+                LargeText: Formatted(config.Format.LargeText, mpdmap),
 				Timestamps: &client.Timestamps{},
 			}
 

@@ -46,19 +46,16 @@ Password = ""
 
 # All the formatting is done using values wrapped in curly braces, for example "{title}"
 # Possible values: 
-#   "volume",
-#   "repeat",
-#   "random",
-#   "single",
-#   "playlistlength",
-#   "consume",
+#   "album",
+#   "albumartist",
+#   "albums",
+#   "artist",
+#   "artists",
 #   "audio",
 #   "bitrate",
-#   "album",
-#   "artist",
-#   "albumartist",
 #   "composer",
 #   "conductor",
+#   "consume",
 #   "date",
 #   "disc",
 #   "ensemble",
@@ -70,18 +67,23 @@ Password = ""
 #   "movementnumber",
 #   "originaldate",
 #   "performer",
+#   "playlistlength",
+#   "random",
+#   "repeat",
+#   "single",
+#   "songs",
 #   "title",
 #   "track",
-#   "work",
-#   "artists",
-#   "albums",
-#   "songs",
+#   "volume",
+#   "work"
 
 [Format]
   # First line
   Details = "{title}"
   # Second line
   State = "{artist}"
+  # Text to display when hovering over the large image
+  LargeText = "{album}"
   # Time display type:
   #   - true: "XX:XX left"
   #   - false: "XX:XX elapsed"
