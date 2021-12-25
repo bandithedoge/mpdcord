@@ -92,14 +92,17 @@ func main() {
 		fmt.Println(prettyConfig.String())
 	}
 
-	// connect to MPD
-	ui.Running("Connecting to MPD at " + config.Address + " using " + config.Network)
-	conn, err := mpd.Dial(config.Network, config.Address)
-	if err != nil {
-		ui.Error("Failed to connect to MPD")
-		panic(err)
-	} else {
-		ui.Success("Connected to MPD")
+	connect := func() mpd.Client {
+		ui.Running("Connecting to MPD at " + config.Address + " using " + config.Network)
+		conn, err := mpd.DialAuthenticated(config.Network, config.Address, config.Password)
+		if err != nil {
+			ui.Error("Failed to connect to MPD")
+			panic(err)
+		} else {
+			ui.Success("Connected to MPD")
+		}
+
+		return *conn
 	}
 
 	// login to discord
@@ -112,30 +115,41 @@ func main() {
 		ui.Success("Logged in to Discord")
 	}
 
+	// connect to MPD
+	conn := connect()
+
 	// listen to MPD events
-	watcher, err := mpd.NewWatcher(config.Network, config.Address, config.Password)
+	watcher, _ := mpd.NewWatcher(config.Network, config.Address, config.Password, "player")
+	defer watcher.Close()
+
+	var song, status, stats mpd.Attrs
+	var mpdmap map[string]string
 
 	go func() {
 		for range watcher.Event {
+			// we have to reconnect every once in a while so we don't get timed out
+			// there's probably a better way of fixing this but i'm too lazy to debug things properly
+			err := conn.Ping()
+			if err != nil {
+				if *verbose {
+					ui.Running("Reconnecting to MPD")
+				}
+				conn = connect()
+			}
 			// get current status
-			song, err := conn.CurrentSong()
-			if err != nil {
-				ui.Error("Couldn't get current song")
-				panic(err)
-			}
-			status, err := conn.Status()
-			if err != nil {
-				ui.Error("Couldn't get status")
-				panic(err)
-			}
-			stats, err := conn.Stats()
-			if err != nil {
-				ui.Error("Couldn't get stats")
-				panic(err)
+			song, _ = conn.CurrentSong()
+			status, _ = conn.Status()
+			stats, _ = conn.Stats()
+
+			if *verbose {
+				fmt.Println("---", time.Now().Format(time.UnixDate))
+				fmt.Println(song)
+				fmt.Println(status)
+				fmt.Println(stats)
 			}
 
 			// merge mpd status maps
-			mpdmap := MergeMaps(song, status, stats)
+			mpdmap = MergeMaps(song, status, stats)
 
 			if *verbose {
 				out, _ := json.Marshal(mpdmap)
@@ -147,8 +161,8 @@ func main() {
 			var activity = client.Activity{
 				Details:    Formatted(config.Format.Details, mpdmap),
 				State:      Formatted(config.Format.State, mpdmap),
-                LargeImage: "mpd",
-                LargeText: Formatted(config.Format.LargeText, mpdmap),
+				LargeImage: "mpd",
+				LargeText:  Formatted(config.Format.LargeText, mpdmap),
 				Timestamps: &client.Timestamps{},
 			}
 
@@ -158,11 +172,26 @@ func main() {
 				start := time.Now().Add(-elapsed)
 				activity.Timestamps.Start = &start
 
+				if *verbose {
+					ui.Info("Elapsed:")
+					fmt.Println(elapsed.String())
+					ui.Info("Start time:")
+					fmt.Println(start.Format(time.UnixDate))
+				}
+
 				if config.Format.Remaining {
 					duration, _ := time.ParseDuration(status["duration"] + "s")
 					end := time.Now().Add(duration).Add(-elapsed)
 					activity.Timestamps.End = &end
+
+					if *verbose {
+						ui.Info("Duration:")
+						fmt.Println(duration.String())
+						ui.Info("End time:")
+						fmt.Println(end.Format(time.UnixDate))
+					}
 				}
+
 			}
 
 			if *verbose {

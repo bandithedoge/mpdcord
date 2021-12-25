@@ -32,8 +32,8 @@ var DefaultConfig = Config{
 	},
 }
 
-func MergeMaps(maps ...map[string]string) (result map[string]string) {
-	result = make(map[string]string)
+func MergeMaps(maps ...map[string]string) map[string]string {
+    result := map[string]string{}
 
 	for _, m := range maps {
 		for k, v := range m {
@@ -44,7 +44,7 @@ func MergeMaps(maps ...map[string]string) (result map[string]string) {
 	return result
 }
 
-func FormatMap(status map[string]string) map[string]string {
+/* func FormatMap(status map[string]string) map[string]string {
 	var values = map[string]string{}
 
 	constants := []string{
@@ -78,19 +78,20 @@ func FormatMap(status map[string]string) map[string]string {
 		"track",
 		"volume",
 		"work",
+        "state",
 	}
 
 	for _, s := range constants {
-		values[strings.ToLower(s)] = status[strings.Title(s)]
+		values[s] = status[s]
 	}
 
 	return values
-}
+} */
 
 func Formatted(s string, m map[string]string) string {
 	formatted, err := interpol.WithMap(s, m)
 	if err != nil {
-		fmt.Println(err)
+        fmt.Println(s, ": ", err)
 	}
 
 	return formatted
