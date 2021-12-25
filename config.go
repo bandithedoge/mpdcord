@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/imkira/go-interpol"
@@ -89,7 +90,7 @@ func FormatMap(status map[string]string) map[string]string {
 func Formatted(s string, m map[string]string) string {
 	formatted, err := interpol.WithMap(s, m)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 
 	return formatted
