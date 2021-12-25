@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/fhs/gompd/mpd"
+	"github.com/imkira/go-interpol"
 )
 
 // define default config
@@ -30,57 +30,66 @@ var DefaultConfig = Config{
 	},
 }
 
-func FormatMap(status mpd.Attrs, song mpd.Attrs, stats mpd.Attrs) map[string]string {
+func MergeMaps(maps ...map[string]string) (result map[string]string) {
+	result = make(map[string]string)
+
+	for _, m := range maps {
+		for k, v := range m {
+			result[strings.ToLower(k)] = v
+		}
+	}
+
+	return result
+}
+
+func FormatMap(status map[string]string) map[string]string {
 	var values = map[string]string{}
 
-	constants := map[string][]string{
-		"status": {
-			"volume",
-			"repeat",
-			"random",
-			"single",
-			"playlistlength",
-			"consume",
-			"audio",
-			"bitrate",
-		},
-		"song": {
-			"album",
-			"artist",
-			"albumartist",
-			"composer",
-			"conductor",
-			"date",
-			"disc",
-			"ensemble",
-			"genre",
-			"grouping",
-			"label",
-			"location",
-			"movement",
-			"movementnumber",
-			"originaldate",
-			"performer",
-			"title",
-			"track",
-			"work",
-		},
-		"stats": {
-			"artists",
-			"albums",
-			"songs",
-		},
+	constants := []string{
+		"volume",
+		"repeat",
+		"random",
+		"single",
+		"playlistlength",
+		"consume",
+		"audio",
+		"bitrate",
+		"album",
+		"artist",
+		"albumartist",
+		"composer",
+		"conductor",
+		"date",
+		"disc",
+		"ensemble",
+		"genre",
+		"grouping",
+		"label",
+		"location",
+		"movement",
+		"movementnumber",
+		"originaldate",
+		"performer",
+		"title",
+		"track",
+		"work",
+		"artists",
+		"albums",
+		"songs",
 	}
 
-	for _, s := range constants["status"] {
-        values[s] = status[strings.Title(s)]
-	}
-	for _, s := range constants["song"] {
-        values[s] = song[strings.Title(s)]
-	}
-	for _, s := range constants["stats"] {
-        values[s] = stats[strings.Title(s)]
+	for _, s := range constants {
+		values[strings.ToLower(s)] = status[strings.Title(s)]
 	}
 
 	return values
+}
+
+func Formatted(s string, m map[string]string) string {
+    formatted, err := interpol.WithMap(s, m)
+    if err != nil {
+        panic(err)
+    }
+
+    return formatted
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/fhs/gompd/mpd"
 	"github.com/hugolgst/rich-go/client"
 	"github.com/imdario/mergo"
-	"github.com/imkira/go-interpol"
 )
 
 func main() {
@@ -54,12 +53,12 @@ func main() {
 	configPath := parser.String("c", "config", &argparse.Options{
 		Required: false,
 		Default:  defaultConfigPath,
-        Help: "Specify non-standard config path",
+		Help:     "Specify non-standard config path",
 	})
 	verbose := parser.Flag("v", "verbose", &argparse.Options{
 		Required: false,
 		Default:  false,
-        Help: "Output additional information, useful for debugging",
+		Help:     "Output additional information, useful for debugging",
 	})
 
 	argerr := parser.Parse(os.Args)
@@ -118,52 +117,31 @@ func main() {
 
 	go func() {
 		for range watcher.Event {
-			// get and possibly print current status
-            song, err := conn.CurrentSong()
+			// get current status
+			song, err := conn.CurrentSong()
 			if err != nil {
 				ui.Error("Couldn't get current song")
 				panic(err)
 			}
-            status, err := conn.Status()
+			status, err := conn.Status()
 			if err != nil {
 				ui.Error("Couldn't get status")
 				panic(err)
 			}
-            stats, err := conn.Stats()
+			stats, err := conn.Stats()
 			if err != nil {
 				ui.Error("Couldn't get stats")
 				panic(err)
 			}
 
+            // merge mpd status maps
+			mpdmap := MergeMaps(song, status, stats)
+
 			if *verbose {
-				outsong, _ := json.Marshal(song)
-				outstatus, _ := json.Marshal(status)
+				out, _ := json.Marshal(mpdmap)
 				ui.Info("Current status:")
-				fmt.Println(string(outstatus))
-				ui.Info("Current song:")
-				fmt.Println(string(outsong))
+				fmt.Println(string(out))
 			}
-
-			// format strings from config
-			details, err := interpol.WithMap(config.Format.Details, FormatMap(status, song, stats))
-            if err != nil {
-                ui.Error("Invalid formatting:")
-                fmt.Println(config.Format.Details)
-                panic(err)
-            } else if *verbose {
-                ui.Info("Details:")
-                fmt.Println(details)
-            }
-
-			state, err := interpol.WithMap(config.Format.State, FormatMap(status, song, stats))
-            if err != nil {
-                ui.Error("Invalid formatting:")
-                fmt.Println(config.Format.State)
-                panic(err)
-            } else if *verbose {
-                ui.Info("State:")
-                fmt.Println(state)
-            }
 
 			// get time when current song finishes
 			elapsed, _ := time.ParseDuration(status["elapsed"] + "s")
@@ -172,20 +150,18 @@ func main() {
 
 			// define activity for RPC
 			var activity = client.Activity{
-				Details: details,
-				State:   state,
+				Details: Formatted(config.Format.Details, mpdmap),
+				State:   Formatted(config.Format.State, mpdmap),
 				Timestamps: &client.Timestamps{
 					Start: &start,
 				},
 			}
-
 
 			if config.Format.Remaining {
 				end := start.Add(duration).Add(-elapsed)
 				activity.Timestamps.End = &end
 			}
 
-			// no need to clutter up the terminal every time you pause
 			if *verbose {
 				out, _ := json.Marshal(activity)
 				ui.Running("Setting RPC status")
