@@ -158,7 +158,7 @@ func main() {
 
 				if config.Format.Remaining {
 					duration, _ := time.ParseDuration(status["duration"] + "s")
-					end := start.Add(duration).Add(-elapsed)
+					end := time.Now().Add(duration).Add(-elapsed)
 					activity.Timestamps.End = &end
 				}
 			}
