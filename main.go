@@ -134,7 +134,7 @@ func main() {
 				panic(err)
 			}
 
-            // merge mpd status maps
+			// merge mpd status maps
 			mpdmap := MergeMaps(song, status, stats)
 
 			if *verbose {
@@ -143,23 +143,24 @@ func main() {
 				fmt.Println(string(out))
 			}
 
-			// get time when current song finishes
-			elapsed, _ := time.ParseDuration(status["elapsed"] + "s")
-			duration, _ := time.ParseDuration(status["duration"] + "s")
-			start := time.Now()
-
 			// define activity for RPC
 			var activity = client.Activity{
-				Details: Formatted(config.Format.Details, mpdmap),
-				State:   Formatted(config.Format.State, mpdmap),
-				Timestamps: &client.Timestamps{
-					Start: &start,
-				},
+				Details:    Formatted(config.Format.Details, mpdmap),
+				State:      Formatted(config.Format.State, mpdmap),
+				Timestamps: &client.Timestamps{},
 			}
 
-			if config.Format.Remaining {
-				end := start.Add(duration).Add(-elapsed)
-				activity.Timestamps.End = &end
+			// properly format time
+			if mpdmap["state"] == "play" {
+				elapsed, _ := time.ParseDuration(status["elapsed"] + "s")
+				start := time.Now().Add(-elapsed)
+				activity.Timestamps.Start = &start
+
+				if config.Format.Remaining {
+					duration, _ := time.ParseDuration(status["duration"] + "s")
+					end := start.Add(duration).Add(-elapsed)
+					activity.Timestamps.End = &end
+				}
 			}
 
 			if *verbose {
