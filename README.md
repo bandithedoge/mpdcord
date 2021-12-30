@@ -1,18 +1,6 @@
 # mpdcord
 
-## Installation
-
-Builds mpdcord locally and places the binary at `$GOPATH/bin/mpdcord` (defaults to `~/go/bin/mpdcord`). You need to [install Go](https://go.dev/doc/install) for this to work.
-
-```bash
-# latest stable
-go install github.com/bandithedoge/mpdcord
-
-# latest unstable
-go install github.com/bandithedoge/mpdcord@latest
-```
-
-## Usage
+![bangin](assets/screenshot.png)
 
 ```console
 usage: mpdcord [-h|--help] [-c|--config "<value>"] [-v|--verbose]
@@ -26,6 +14,20 @@ Arguments:
                  $XDG_CONFIG_HOME/mpdcord.toml
   -v  --verbose  Output additional information, useful for debugging. Default:
                  false
+```
+
+## Installation
+
+<!-- You can useBuilds mpdcord locally and places the binary at . You need to [install Go]() for this to work. -->
+
+You can install `mpdcord` on any distro/OS by building it yourself with [Go](https://go.dev/doc/install). This will install the binary to `$GOPATH/bin/mpdcord` (defaults to `~/go/bin/mpdcord`), so make sure it's in your `$PATH`.
+
+```bash
+# latest stable
+go install github.com/bandithedoge/mpdcord
+
+# latest unstable
+go install github.com/bandithedoge/mpdcord@latest
 ```
 
 ## Configuration
@@ -45,45 +47,16 @@ Network = "tcp"
 Password = ""
 
 # All the formatting is done using values wrapped in curly braces, for example "{title}"
-# Possible values: 
-#   "album",
-#   "albumartist",
-#   "albums",
-#   "artist",
-#   "artists",
-#   "audio",
-#   "bitrate",
-#   "composer",
-#   "conductor",
-#   "consume",
-#   "date",
-#   "disc",
-#   "ensemble",
-#   "genre",
-#   "grouping",
-#   "label",
-#   "location",
-#   "movement",
-#   "movementnumber",
-#   "originaldate",
-#   "performer",
-#   "playlistlength",
-#   "random",
-#   "repeat",
-#   "single",
-#   "songs",
-#   "title",
-#   "track",
-#   "volume",
-#   "work"
 
 [Format]
   # First line
   Details = "{title}"
   # Second line
   State = "{artist}"
-  # Text to display when hovering over the large image
+  # Text to display above the large image
   LargeText = "{album}"
+  # Text to display above the small image
+  SmallText = "{state}"
   # Time display type:
   #   - true: "XX:XX left"
   #   - false: "XX:XX elapsed"

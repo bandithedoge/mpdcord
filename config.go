@@ -9,8 +9,8 @@ import (
 
 // define default config
 type Format struct {
-	Details, State, LargeText string
-	Remaining                 bool
+	Details, State, LargeText, SmallText string
+	Remaining                            bool
 }
 
 type Config struct {
@@ -28,12 +28,13 @@ var DefaultConfig = Config{
 		Details:   "{title}",
 		State:     "{artist}",
 		LargeText: "{album}",
+		SmallText: "{state}",
 		Remaining: false,
 	},
 }
 
 func MergeMaps(maps ...map[string]string) map[string]string {
-    result := map[string]string{}
+	result := map[string]string{}
 
 	for _, m := range maps {
 		for k, v := range m {
@@ -44,54 +45,10 @@ func MergeMaps(maps ...map[string]string) map[string]string {
 	return result
 }
 
-/* func FormatMap(status map[string]string) map[string]string {
-	var values = map[string]string{}
-
-	constants := []string{
-		"album",
-		"albumartist",
-		"albums",
-		"artist",
-		"artists",
-		"audio",
-		"bitrate",
-		"composer",
-		"conductor",
-		"consume",
-		"date",
-		"disc",
-		"ensemble",
-		"genre",
-		"grouping",
-		"label",
-		"location",
-		"movement",
-		"movementnumber",
-		"originaldate",
-		"performer",
-		"playlistlength",
-		"random",
-		"repeat",
-		"single",
-		"songs",
-		"title",
-		"track",
-		"volume",
-		"work",
-        "state",
-	}
-
-	for _, s := range constants {
-		values[s] = status[s]
-	}
-
-	return values
-} */
-
 func Formatted(s string, m map[string]string) string {
 	formatted, err := interpol.WithMap(s, m)
 	if err != nil {
-        fmt.Println(s, ": ", err)
+		fmt.Println(s, ": ", err)
 	}
 
 	return formatted

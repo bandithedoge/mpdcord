@@ -131,9 +131,7 @@ func main() {
 			// there's probably a better way of fixing this but i'm too lazy to debug things properly
 			err := conn.Ping()
 			if err != nil {
-				if *verbose {
-					ui.Running("Reconnecting to MPD")
-				}
+				ui.Running("Reconnecting to MPD")
 				conn = connect()
 			}
 			// get current status
@@ -163,6 +161,8 @@ func main() {
 				State:      Formatted(config.Format.State, mpdmap),
 				LargeImage: "mpd",
 				LargeText:  Formatted(config.Format.LargeText, mpdmap),
+				SmallImage: mpdmap["state"],
+				SmallText:  Formatted(config.Format.SmallText, mpdmap),
 				Timestamps: &client.Timestamps{},
 			}
 
