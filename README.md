@@ -62,3 +62,8 @@ Password = ""
   #   - false: "XX:XX elapsed"
   Remaining = false
 ```
+
+## TODO
+
+- [ ] Don't reconnect to Discord at every status change
+- [ ] Figure out dynamically changing album covers (will definitely require a custom app ID)

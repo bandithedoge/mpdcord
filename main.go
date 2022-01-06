@@ -82,6 +82,7 @@ func main() {
 	}
 	// merge with default config
 	mergo.Merge(&config, DefaultConfig)
+
 	// pretty print current config
 	if *verbose {
 		prettyConfig := new(bytes.Buffer)
@@ -92,12 +93,12 @@ func main() {
 		fmt.Println(prettyConfig.String())
 	}
 
+	// connect to MPD
 	connect := func() mpd.Client {
 		ui.Running("Connecting to MPD at " + config.Address + " using " + config.Network)
 		conn, err := mpd.DialAuthenticated(config.Network, config.Address, config.Password)
 		if err != nil {
 			ui.Error("Failed to connect to MPD")
-			panic(err)
 		} else {
 			ui.Success("Connected to MPD")
 		}
@@ -105,23 +106,39 @@ func main() {
 		return *conn
 	}
 
-	// login to discord
-	ui.Running("Logging in to Discord as " + strconv.Itoa(config.ID))
-	login := client.Login(strconv.Itoa(config.ID))
-	if login != nil {
-		ui.Error("Couldn't log in to Discord")
-		panic(login)
-	} else {
-		ui.Success("Logged in to Discord")
+	// login to Discord
+	login := func() error {
+		ui.Running("Logging in to Discord as " + strconv.Itoa(config.ID))
+		err := client.Login(strconv.Itoa(config.ID))
+		if err != nil {
+			ui.Error("Couldn't log in to Discord")
+		} else {
+			ui.Success("Logged in to Discord")
+		}
+		return err
 	}
 
-	// connect to MPD
-	conn := connect()
-
 	// listen to MPD events
-	watcher, _ := mpd.NewWatcher(config.Network, config.Address, config.Password, "player")
+	watcher, _ := mpd.NewWatcher(config.Network, config.Address, config.Password, "")
 	defer watcher.Close()
 
+	// try to connect to MPD and Discord
+	conn := connect()
+
+	// pinging and reconnecting
+	reconnect := func() {
+		err := conn.Ping()
+		if err != nil {
+			ui.Running("Reconnecting to MPD")
+			conn = connect()
+		}
+		discord := login()
+		if discord != nil {
+			login()
+		}
+	}
+
+	// timeout, _ := time.ParseDuration(config.Timeout)
 	var song, status, stats mpd.Attrs
 	var mpdmap map[string]string
 
@@ -129,78 +146,76 @@ func main() {
 		for range watcher.Event {
 			// we have to reconnect every once in a while so we don't get timed out
 			// there's probably a better way of fixing this but i'm too lazy to debug things properly
-			err := conn.Ping()
-			if err != nil {
-				ui.Running("Reconnecting to MPD")
-				conn = connect()
-			}
-			// get current status
-			song, _ = conn.CurrentSong()
-			status, _ = conn.Status()
-			stats, _ = conn.Stats()
-
-			if *verbose {
-				fmt.Println("---", time.Now().Format(time.UnixDate))
-				fmt.Println(song)
-				fmt.Println(status)
-				fmt.Println(stats)
-			}
-
-			// merge mpd status maps
-			mpdmap = MergeMaps(song, status, stats)
-
-			if *verbose {
-				out, _ := json.Marshal(mpdmap)
-				ui.Info("Current status:")
-				fmt.Println(string(out))
-			}
-
-			// define activity for RPC
-			var activity = client.Activity{
-				Details:    Formatted(config.Format.Details, mpdmap),
-				State:      Formatted(config.Format.State, mpdmap),
-				LargeImage: "mpd",
-				LargeText:  Formatted(config.Format.LargeText, mpdmap),
-				SmallImage: mpdmap["state"],
-				SmallText:  Formatted(config.Format.SmallText, mpdmap),
-				Timestamps: &client.Timestamps{},
-			}
-
-			// properly format time
-			if mpdmap["state"] == "play" {
-				elapsed, _ := time.ParseDuration(status["elapsed"] + "s")
-				start := time.Now().Add(-elapsed)
-				activity.Timestamps.Start = &start
+			reconnect()
+			{
+				// get current status
+				song, _ = conn.CurrentSong()
+				status, _ = conn.Status()
+				stats, _ = conn.Stats()
 
 				if *verbose {
-					ui.Info("Elapsed:")
-					fmt.Println(elapsed.String())
-					ui.Info("Start time:")
-					fmt.Println(start.Format(time.UnixDate))
+					fmt.Println("---", time.Now().Format(time.UnixDate))
+					fmt.Println(song)
+					fmt.Println(status)
+					fmt.Println(stats)
 				}
 
-				if config.Format.Remaining {
-					duration, _ := time.ParseDuration(status["duration"] + "s")
-					end := time.Now().Add(duration).Add(-elapsed)
-					activity.Timestamps.End = &end
+				// merge mpd status maps
+				mpdmap = MergeMaps(song, status, stats)
+
+				if *verbose {
+					out, _ := json.Marshal(mpdmap)
+					ui.Info("Current status:")
+					fmt.Println(string(out))
+				}
+
+				// define activity for RPC
+				var activity = client.Activity{
+					Details:    Formatted(config.Format.Details, mpdmap),
+					State:      Formatted(config.Format.State, mpdmap),
+					LargeImage: "mpd",
+					LargeText:  Formatted(config.Format.LargeText, mpdmap),
+					SmallImage: mpdmap["state"],
+					SmallText:  Formatted(config.Format.SmallText, mpdmap),
+					Timestamps: &client.Timestamps{},
+				}
+
+				// properly format time
+				if mpdmap["state"] == "play" {
+					elapsed, _ := time.ParseDuration(status["elapsed"] + "s")
+					start := time.Now().Add(-elapsed)
+					activity.Timestamps.Start = &start
 
 					if *verbose {
-						ui.Info("Duration:")
-						fmt.Println(duration.String())
-						ui.Info("End time:")
-						fmt.Println(end.Format(time.UnixDate))
+						ui.Info("Elapsed:")
+						fmt.Println(elapsed.String())
+						ui.Info("Start time:")
+						fmt.Println(start.Format(time.UnixDate))
 					}
+
+					if config.Format.Remaining {
+						duration, _ := time.ParseDuration(status["duration"] + "s")
+						end := time.Now().Add(duration).Add(-elapsed)
+						activity.Timestamps.End = &end
+
+						if *verbose {
+							ui.Info("Duration:")
+							fmt.Println(duration.String())
+							ui.Info("End time:")
+							fmt.Println(end.Format(time.UnixDate))
+						}
+					}
+
 				}
 
-			}
+				if *verbose {
+					out, _ := json.Marshal(activity)
+					ui.Running("Setting RPC status")
+					fmt.Println(string(out))
+				}
 
-			if *verbose {
-				out, _ := json.Marshal(activity)
-				ui.Running("Setting RPC status")
-				fmt.Println(string(out))
+				client.SetActivity(activity)
 			}
-
-			client.SetActivity(activity)
 		}
 	}()
 
