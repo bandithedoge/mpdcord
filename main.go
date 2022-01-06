@@ -170,51 +170,60 @@ func main() {
 				}
 
 				// define activity for RPC
-				var activity = client.Activity{
-					Details:    Formatted(config.Format.Details, mpdmap),
-					State:      Formatted(config.Format.State, mpdmap),
-					LargeImage: "mpd",
-					LargeText:  Formatted(config.Format.LargeText, mpdmap),
-					SmallImage: mpdmap["state"],
-					SmallText:  Formatted(config.Format.SmallText, mpdmap),
-					Timestamps: &client.Timestamps{},
-				}
+				var activity client.Activity
 
-				// properly format time
-				if mpdmap["state"] == "play" {
-					elapsed, _ := time.ParseDuration(status["elapsed"] + "s")
-					start := time.Now().Add(-elapsed)
-					activity.Timestamps.Start = &start
-
-					if *verbose {
-						ui.Info("Elapsed:")
-						fmt.Println(elapsed.String())
-						ui.Info("Start time:")
-						fmt.Println(start.Format(time.UnixDate))
+				if !(config.Format.PlayingOnly && mpdmap["state"] != "play") {
+					activity = client.Activity{
+						Details:    Formatted(config.Format.Details, mpdmap),
+						State:      Formatted(config.Format.State, mpdmap),
+						LargeImage: "mpd",
+						LargeText:  Formatted(config.Format.LargeText, mpdmap),
+						SmallImage: mpdmap["state"],
+						SmallText:  Formatted(config.Format.SmallText, mpdmap),
+						Timestamps: &client.Timestamps{},
 					}
 
-					if config.Format.Remaining {
-						duration, _ := time.ParseDuration(status["duration"] + "s")
-						end := time.Now().Add(duration).Add(-elapsed)
-						activity.Timestamps.End = &end
+					// properly format time
+					if mpdmap["state"] == "play" {
+						elapsed, _ := time.ParseDuration(status["elapsed"] + "s")
+						start := time.Now().Add(-elapsed)
+						activity.Timestamps.Start = &start
 
 						if *verbose {
-							ui.Info("Duration:")
-							fmt.Println(duration.String())
-							ui.Info("End time:")
-							fmt.Println(end.Format(time.UnixDate))
+							ui.Info("Elapsed:")
+							fmt.Println(elapsed.String())
+							ui.Info("Start time:")
+							fmt.Println(start.Format(time.UnixDate))
 						}
+
+						if config.Format.Remaining {
+							duration, _ := time.ParseDuration(status["duration"] + "s")
+							end := time.Now().Add(duration).Add(-elapsed)
+							activity.Timestamps.End = &end
+
+							if *verbose {
+								ui.Info("Duration:")
+								fmt.Println(duration.String())
+								ui.Info("End time:")
+								fmt.Println(end.Format(time.UnixDate))
+							}
+						}
+
 					}
 
-				}
+					if *verbose {
+						out, _ := json.Marshal(activity)
+						ui.Running("Setting RPC status")
+						fmt.Println(string(out))
+					}
 
-				if *verbose {
-					out, _ := json.Marshal(activity)
-					ui.Running("Setting RPC status")
-					fmt.Println(string(out))
+					client.SetActivity(activity)
+				} else {
+                    if *verbose {
+                        ui.Running("Logging out")
+                    }
+                    client.Logout()
 				}
-
-				client.SetActivity(activity)
 			}
 		}
 	}()

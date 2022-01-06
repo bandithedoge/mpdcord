@@ -18,8 +18,6 @@ Arguments:
 
 ## Installation
 
-<!-- You can useBuilds mpdcord locally and places the binary at . You need to [install Go]() for this to work. -->
-
 You can install `mpdcord` on any distro/OS by building it yourself with [Go](https://go.dev/doc/install). This will install the binary to `$GOPATH/bin/mpdcord` (defaults to `~/go/bin/mpdcord`), so make sure it's in your `$PATH`.
 
 ```bash
@@ -46,7 +44,11 @@ Network = "tcp"
 # Optional MPD password
 Password = ""
 
-# All the formatting is done using values wrapped in curly braces, for example "{title}"
+# Formatting is done using strings with keys wrapped in curly braces, for example: "{title}"
+# For all possible keys refer to:
+#   - https://mpd.readthedocs.io/en/latest/protocol.html#tags
+#   - https://mpd.readthedocs.io/en/latest/protocol.html#command-status
+#   - https://mpd.readthedocs.io/en/latest/protocol.html#command-stats
 
 [Format]
   # First line
@@ -57,11 +59,17 @@ Password = ""
   LargeText = "{album}"
   # Text to display above the small image
   SmallText = "{state}"
-  # Time display type:
+  # Time display mode:
   #   - true: "XX:XX left"
   #   - false: "XX:XX elapsed"
   Remaining = false
+  # What to do when paused
+  #   - true: Display nothing
+  #   - false: Act normally (show all the metadata and a "pause" icon)
+  PlayingOnly = false
 ```
+
+> Configuration keys and their default values are defined in [`defaults.go`](defaults.go)
 
 ## TODO
 
