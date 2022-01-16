@@ -4,3 +4,4 @@ main
 *.exe
 .direnv/*
 .DS_Store
+vendor/*
