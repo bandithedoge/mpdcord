@@ -1,6 +1,12 @@
-(import (let lock = builtins.fromJSON (builtins.readFile ./flake.lock);
-in fetchTarball {
-  url =
-    "https://github.com/edolstra/flake-compat/archive/${lock.nodes.flake-compat.locked.rev}.tar.gz";
-  sha256 = lock.nodes.flake-compat.locked.narHash;
-}) { src = ./.; }).defaultNix
+{ pkgs ? import <nixpkgs> { } }:
+pkgs.buildGoPackage {
+  pname = "mpdcord";
+  version = "0.1";
+  src = ./.;
+  goDeps = ./deps.nix;
+  goPackagePath = "github.com/bandithedoge/mpdcord";
+  buildInputs = with pkgs; [ go vgo2nix ];
+  preConfigure = ''
+    ${pkgs.vgo2nix}/bin/vgo2nix
+  '';
+}
