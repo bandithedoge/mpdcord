@@ -41,12 +41,12 @@
     };
   }
   {
-    goPackagePath = "github.com/dixonwille/wlog/v3";
+    goPackagePath = "github.com/dixonwille/wlog";
     fetch = {
       type = "git";
       url = "https://github.com/dixonwille/wlog";
-      rev = "v3.0.1";
-      sha256 = "1h9hmpxi94v9mcj9anl6r0rraxya54h49nmb7mp11jys51h6317h";
+      rev = "v2.0.0";
+      sha256 = "0s3q9fm9iqcak15w97j5m9a79zv3cfch0vpmscmv0ay69fzsm0i7";
       moduleDir = "";
     };
   }

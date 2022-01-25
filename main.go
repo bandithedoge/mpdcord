@@ -12,7 +12,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/akamensky/argparse"
-	"github.com/dixonwille/wlog/v3"
+	"github.com/dixonwille/wlog"
 	"github.com/fhs/gompd/mpd"
 	"github.com/hugolgst/rich-go/client"
 	"github.com/imdario/mergo"
@@ -219,10 +219,10 @@ func main() {
 
 					client.SetActivity(activity)
 				} else {
-                    if *verbose {
-                        ui.Running("Logging out")
-                    }
-                    client.Logout()
+					if *verbose {
+						ui.Running("Logging out")
+					}
+					client.Logout()
 				}
 			}
 		}

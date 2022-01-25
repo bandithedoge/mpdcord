@@ -6,8 +6,8 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/daviddengcn/go-colortext v0.0.0-20180409174941-186a3d44e920 h1:d/cVoZOrJPJHKH1NdeUjyVAWKp4OpOT+Q+6T1sH7jeU=
 github.com/daviddengcn/go-colortext v0.0.0-20180409174941-186a3d44e920/go.mod h1:dv4zxwHi5C/8AeI+4gX4dCWOIvNi7I6JCSX0HvlKPgE=
-github.com/dixonwille/wlog/v3 v3.0.1 h1:ViTSsNNndHlKW5S89x5O0KSTpTT9zdPqrkA/TZYY8+s=
-github.com/dixonwille/wlog/v3 v3.0.1/go.mod h1:fPYZR9Ne5gFh3N8b3CuXVWHWxkY6Yg1wCeS3Km6Nc0I=
+github.com/dixonwille/wlog v2.0.0+incompatible h1:y+3XQZTqAr/ezz1cFNka26IghthI1p3bFl0iCyVdbIM=
+github.com/dixonwille/wlog v2.0.0+incompatible/go.mod h1:OkncXCVWN/9PphV9c/JsBrdksw4Ro2pmxxR9Dnc1k2s=
 github.com/fhs/gompd v1.0.1 h1:kBcAhjnAPJQAylZXR0TeH+d2vpjawXlTtKYguqNlF4A=
 github.com/fhs/gompd v1.0.1/go.mod h1:b219/mNa9PvRqvkUip51b23hGL3iX4d4q3gNXdtrD04=
 github.com/golangplus/bytes v0.0.0-20160111154220-45c989fe5450/go.mod h1:Bk6SMAONeMXrxql8uvOKuAZSu8aM5RUGv+1C6IJaEho=
