@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,11 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/akamensky/argparse"
 	"github.com/fhs/gompd/mpd"
 	"github.com/hugolgst/rich-go/client"
-	"github.com/imdario/mergo"
 	"github.com/pterm/pterm"
 )
 
@@ -30,24 +27,15 @@ func main() {
 		done <- true
 	}()
 
+	// get config
+	err := GetConfig()
+	if err != nil {
+		pterm.Error.Printfln("Couldn't read config: %s", err)
+	}
+
 	// setup cli option parser
 	parser := argparse.NewParser("mpdcord", "Discord Rich Presence for MPD written in Go")
 
-	// get config path
-	configHome := os.Getenv("XDG_CONFIG_HOME")
-	var defaultConfigPath string
-	if configHome != "" {
-		defaultConfigPath = configHome + "mpdcord.toml"
-	} else {
-		homePath, _ := os.UserHomeDir()
-		defaultConfigPath = homePath + "/.config/mpdcord.toml"
-	}
-
-	configPath := parser.String("c", "config", &argparse.Options{
-		Required: false,
-		Default:  defaultConfigPath,
-		Help:     "Specify non-standard config path",
-	})
 	verbose := parser.Flag("v", "verbose", &argparse.Options{
 		Required: false,
 		Default:  false,
@@ -60,34 +48,10 @@ func main() {
 		panic(argerr)
 	}
 
-	// check config path
-	configContent, err := os.ReadFile(*configPath)
-	if err != nil {
-		pterm.Error.Println("Couldn't read config at " + *configPath + ", using default values")
-	} else if *verbose {
-		pterm.Info.Println("Contents of " + *configPath + ":\n" + string(configContent))
-	}
-	// read TOML values from config
-	var config Config
-	if err := toml.Unmarshal(configContent, &config); err != nil {
-		panic(err)
-	}
-	// merge with default config
-	mergo.Merge(&config, DefaultConfig)
-
-	// pretty print current config
-	if *verbose {
-		prettyConfig := new(bytes.Buffer)
-		if err := toml.NewEncoder(prettyConfig).Encode(config); err != nil {
-			panic(err)
-		}
-		pterm.Info.Println("Current config:\n" + prettyConfig.String())
-	}
-
 	// connect to MPD
 	connect := func() mpd.Client {
-		spinner, _ := pterm.DefaultSpinner.Start("Connecting to MPD at " + config.Address + " using " + config.Network)
-		conn, err := mpd.DialAuthenticated(config.Network, config.Address, config.Password)
+		spinner, _ := pterm.DefaultSpinner.Start("Connecting to MPD at " + DefaultConfig.Address + " using " + DefaultConfig.Network)
+		conn, err := mpd.DialAuthenticated(DefaultConfig.Network, DefaultConfig.Address, DefaultConfig.Password)
 		if err != nil {
 			spinner.Fail("Failed to connect to MPD")
 		} else {
@@ -99,8 +63,8 @@ func main() {
 
 	// login to Discord
 	login := func() error {
-		spinner, _ := pterm.DefaultSpinner.Start("Logging in to Discord as " + strconv.Itoa(config.ID))
-		err := client.Login(strconv.Itoa(config.ID))
+		spinner, _ := pterm.DefaultSpinner.Start("Logging in to Discord as " + strconv.Itoa(DefaultConfig.ID))
+		err := client.Login(strconv.Itoa(DefaultConfig.ID))
 		if err != nil {
 			spinner.Fail()
 		} else {
@@ -110,7 +74,7 @@ func main() {
 	}
 
 	// listen to MPD events
-	watcher, _ := mpd.NewWatcher(config.Network, config.Address, config.Password, "")
+	watcher, _ := mpd.NewWatcher(DefaultConfig.Network, DefaultConfig.Address, DefaultConfig.Password, "")
 	defer watcher.Close()
 
 	// try to connect to MPD and Discord
@@ -146,7 +110,8 @@ func main() {
 				stats, _ = conn.Stats()
 
 				if *verbose {
-					pterm.Info.Printfln("--- %s\n%s\n%s\n%s", time.Now().Format(time.UnixDate), song, status, stats)
+					pterm.DefaultHeader.Printfln("--- %s", time.Now().Format(time.UnixDate))
+					pterm.Info.Printfln("%s\n%s\n%s", song, status, stats)
 				}
 
 				// merge mpd status maps
@@ -160,14 +125,14 @@ func main() {
 				// define activity for RPC
 				var activity client.Activity
 
-				if !(config.Format.PlayingOnly && mpdmap["state"] != "play") {
+				if !(DefaultConfig.Format.PlayingOnly && mpdmap["state"] != "play") {
 					activity = client.Activity{
-						Details:    Formatted(config.Format.Details, mpdmap),
-						State:      Formatted(config.Format.State, mpdmap),
+						Details:    Formatted(DefaultConfig.Format.Details, mpdmap),
+						State:      Formatted(DefaultConfig.Format.State, mpdmap),
 						LargeImage: "mpd",
-						LargeText:  Formatted(config.Format.LargeText, mpdmap),
+						LargeText:  Formatted(DefaultConfig.Format.LargeText, mpdmap),
 						SmallImage: mpdmap["state"],
-						SmallText:  Formatted(config.Format.SmallText, mpdmap),
+						SmallText:  Formatted(DefaultConfig.Format.SmallText, mpdmap),
 						Timestamps: &client.Timestamps{},
 					}
 
@@ -181,7 +146,7 @@ func main() {
 							pterm.Info.Printfln("Elapsed: %s\nStart time: %s", elapsed.String(), start.Format(time.UnixDate))
 						}
 
-						if config.Format.Remaining {
+						if DefaultConfig.Format.Remaining {
 							duration, _ := time.ParseDuration(status["duration"] + "s")
 							end := time.Now().Add(duration).Add(-elapsed)
 							activity.Timestamps.End = &end
