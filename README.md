@@ -35,7 +35,7 @@ go install github.com/bandithedoge/mpdcord@latest
 Everything is configured in a TOML file located at `$XDG_CONFIG_HOME/mpdcord.toml` (defaults to `~/.config/mpdcord.toml`). Here is an example configuration populated with default values:
 
 ```toml
-# Note: keys are not case-sensitive.
+# NOTE: keys are not case-sensitive
 
 # Discord API application ID, use this to customize title and images
 ID = 922175995828654100
@@ -47,6 +47,7 @@ Network = "tcp"
 Password = ""
 
 # Formatting is done using strings with keys wrapped in curly braces, for example: "{title}"
+# NOTE: You can change these settings without restarting mpdcord
 # See below for all available keys
 [Format]
   # First line

@@ -28,10 +28,7 @@ func main() {
 	}()
 
 	// get config
-	err := GetConfig()
-	if err != nil {
-		pterm.Error.Printfln("Couldn't read config: %s", err)
-	}
+	GetConfig()
 
 	// setup cli option parser
 	parser := argparse.NewParser("mpdcord", "Discord Rich Presence for MPD written in Go")
@@ -100,6 +97,8 @@ func main() {
 
 	go func() {
 		for range watcher.Event {
+		    // reload config at every state change without restarting
+		    GetConfig()
 			// we have to reconnect every once in a while so we don't get timed out
 			// there's probably a better way of fixing this but i'm too lazy to debug things properly
 			reconnect()

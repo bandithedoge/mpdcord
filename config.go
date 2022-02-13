@@ -5,26 +5,22 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/imkira/go-interpol"
 	"github.com/pterm/pterm"
 	"github.com/spf13/viper"
 )
 
-func GetConfig() error {
+func GetConfig() {
 	viper.SetConfigName("mpdcord.toml")
 	viper.SetConfigType("toml")
 	viper.AddConfigPath(os.Getenv("XDG_CONFIG_HOME"))
 	viper.AddConfigPath("$HOME/.config")
 
     err := viper.ReadInConfig()
+    if err != nil {
+        pterm.Error.Println(err)
+    }
 	viper.Unmarshal(DefaultConfig)
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		pterm.Info.Printfln("Config file changed: %s", e.Name)
-	})
-	viper.WatchConfig()
-
-	return err
 }
 
 func MergeMaps(maps ...map[string]string) map[string]string {
