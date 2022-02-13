@@ -12,20 +12,13 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/akamensky/argparse"
-	"github.com/dixonwille/wlog"
 	"github.com/fhs/gompd/mpd"
 	"github.com/hugolgst/rich-go/client"
 	"github.com/imdario/mergo"
+	"github.com/pterm/pterm"
 )
 
 func main() {
-	// setup logger
-	var ui wlog.UI
-	ui = wlog.New(os.Stdin, os.Stdout, os.Stdout)
-	ui = wlog.AddPrefix("?", wlog.Cross, " ", "", "", "~", wlog.Check, "!", ui)
-	ui = wlog.AddColor(wlog.Magenta, wlog.Red, wlog.Blue, wlog.BrightWhite, wlog.White, wlog.BrightMagenta, wlog.Cyan, wlog.Green, wlog.Yellow, ui)
-	ui = wlog.AddConcurrent(ui)
-
 	// wait for ^C
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -70,10 +63,9 @@ func main() {
 	// check config path
 	configContent, err := os.ReadFile(*configPath)
 	if err != nil {
-		ui.Warn("Couldn't read config at " + *configPath + ", using default values")
+		pterm.Error.Println("Couldn't read config at " + *configPath + ", using default values")
 	} else if *verbose {
-		ui.Info("Contents of " + *configPath)
-		fmt.Println(string(configContent))
+		pterm.Info.Println("Contents of " + *configPath + ":\n" + string(configContent))
 	}
 	// read TOML values from config
 	var config Config
@@ -89,18 +81,17 @@ func main() {
 		if err := toml.NewEncoder(prettyConfig).Encode(config); err != nil {
 			panic(err)
 		}
-		ui.Info("Current config:")
-		fmt.Println(prettyConfig.String())
+		pterm.Info.Println("Current config:\n" + prettyConfig.String())
 	}
 
 	// connect to MPD
 	connect := func() mpd.Client {
-		ui.Running("Connecting to MPD at " + config.Address + " using " + config.Network)
+		spinner, _ := pterm.DefaultSpinner.Start("Connecting to MPD at " + config.Address + " using " + config.Network)
 		conn, err := mpd.DialAuthenticated(config.Network, config.Address, config.Password)
 		if err != nil {
-			ui.Error("Failed to connect to MPD")
+			spinner.Fail("Failed to connect to MPD")
 		} else {
-			ui.Success("Connected to MPD")
+			spinner.Success("Connected to MPD")
 		}
 
 		return *conn
@@ -108,12 +99,12 @@ func main() {
 
 	// login to Discord
 	login := func() error {
-		ui.Running("Logging in to Discord as " + strconv.Itoa(config.ID))
+		spinner, _ := pterm.DefaultSpinner.Start("Logging in to Discord as " + strconv.Itoa(config.ID))
 		err := client.Login(strconv.Itoa(config.ID))
 		if err != nil {
-			ui.Error("Couldn't log in to Discord")
+			spinner.Fail()
 		} else {
-			ui.Success("Logged in to Discord")
+			spinner.Success()
 		}
 		return err
 	}
@@ -129,8 +120,9 @@ func main() {
 	reconnect := func() {
 		err := conn.Ping()
 		if err != nil {
-			ui.Running("Reconnecting to MPD")
+			spinner, _ := pterm.DefaultSpinner.Start("Reconnecting to MPD")
 			conn = connect()
+			spinner.Success()
 		}
 		discord := login()
 		if discord != nil {
@@ -154,10 +146,7 @@ func main() {
 				stats, _ = conn.Stats()
 
 				if *verbose {
-					fmt.Println("---", time.Now().Format(time.UnixDate))
-					fmt.Println(song)
-					fmt.Println(status)
-					fmt.Println(stats)
+					pterm.Info.Printfln("--- %s\n%s\n%s\n%s", time.Now().Format(time.UnixDate), song, status, stats)
 				}
 
 				// merge mpd status maps
@@ -165,8 +154,7 @@ func main() {
 
 				if *verbose {
 					out, _ := json.Marshal(mpdmap)
-					ui.Info("Current status:")
-					fmt.Println(string(out))
+					pterm.Info.Println("Current status:\n" + string(out))
 				}
 
 				// define activity for RPC
@@ -190,10 +178,7 @@ func main() {
 						activity.Timestamps.Start = &start
 
 						if *verbose {
-							ui.Info("Elapsed:")
-							fmt.Println(elapsed.String())
-							ui.Info("Start time:")
-							fmt.Println(start.Format(time.UnixDate))
+							pterm.Info.Printfln("Elapsed: %s\nStart time: %s", elapsed.String(), start.Format(time.UnixDate))
 						}
 
 						if config.Format.Remaining {
@@ -202,10 +187,7 @@ func main() {
 							activity.Timestamps.End = &end
 
 							if *verbose {
-								ui.Info("Duration:")
-								fmt.Println(duration.String())
-								ui.Info("End time:")
-								fmt.Println(end.Format(time.UnixDate))
+								pterm.Info.Printfln("Duration: %s\nEnd time: %s", duration.String(), end.Format(time.UnixDate))
 							}
 						}
 
@@ -213,14 +195,15 @@ func main() {
 
 					if *verbose {
 						out, _ := json.Marshal(activity)
-						ui.Running("Setting RPC status")
-						fmt.Println(string(out))
+						spinner, _ := pterm.DefaultSpinner.Start("Setting RPC status")
+						pterm.Info.Println(string(out))
+						spinner.Success()
 					}
 
 					client.SetActivity(activity)
 				} else {
 					if *verbose {
-						ui.Running("Logging out")
+						pterm.Info.Println("Logging out")
 					}
 					client.Logout()
 				}
@@ -229,8 +212,11 @@ func main() {
 	}()
 
 	<-done
-	ui.Running("Closing MPD connection")
+	spinner, _ := pterm.DefaultSpinner.Start("Closing MPD connection")
 	conn.Close()
-	ui.Running("Logging out")
+	spinner.Success()
+
+	spinner, _ = pterm.DefaultSpinner.Start("Logging out")
 	client.Logout()
+	spinner.Success()
 }
